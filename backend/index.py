@@ -3,7 +3,8 @@ import threading
 from time import time
 
 import webview
-
+import uvicorn
+from api_server import app as fast_app
 
 class Api:
     def fullscreen(self):
@@ -59,14 +60,21 @@ def set_interval(interval):
 entry = get_entrypoint()
 
 
-@set_interval(1)
-def update_ticker():
-    if len(webview.windows) > 0:
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.setTicker("%d")' % time()
-        )
+# @set_interval(1)
+# def update_ticker():
+#     if len(webview.windows) > 0:
+#         webview.windows[0].evaluate_js(
+#             'window.pywebview.state.setTicker("%d")' % time()
+#         )
 
+
+def start_fastapi():
+    uvicorn.run(fast_app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
-    window = webview.create_window("pywebview-react boilerplate", entry, js_api=Api())
-    webview.start(update_ticker, debug=True)
+    # Start FastAPI server in a separate thread
+    threading.Thread(target=start_fastapi, daemon=True).start()
+
+    # Create a PyWebView window
+    window = webview.create_window("quantedge-window", entry, js_api=Api())
+    webview.start(debug=True)

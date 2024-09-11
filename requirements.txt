@@ -1,4 +1,6 @@
 setuptools
 pywebview
+fastapi
+uvicorn
 pyinstaller; sys_platform != 'darwin'
 py2app; sys_platform == 'darwin'

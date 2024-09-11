@@ -1,10 +1,11 @@
 import Header from './components/Header';
-import SearchBox from './components/SearchBox';
+import MainBody from './components/MainBody';
+
 function App() {
   return (
     <>
       <Header />
-      <SearchBox />
+      <MainBody />
     </>
   );
 }
