@@ -1,4 +1,4 @@
-setuptools
+setuptools==70.3.0
 pywebview
 fastapi
 uvicorn
