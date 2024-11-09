@@ -5,10 +5,11 @@ export default function TechnicalAnalysis() {
   async function handleEndPoint() {
     try {
       const response = await fetch(
-        'https://localhost:8080/api/fectchTicker?ticker=' + ticker
+        'http://localhost:8000/api/fectchTicker?ticker=' + ticker
       );
       const data = await response.json();
-      setTickerData(data);
+
+      setTickerData(data.technical_data);
     } catch (error) {
       console.log(error);
     }
@@ -22,7 +23,7 @@ export default function TechnicalAnalysis() {
         onChange={(e) => setTicker(e.target.value)}
       />
       <button onClick={handleEndPoint}>Go!!</button>
-      {tickerData}
+      <div>{tickerData}</div>
     </div>
   );
 }
