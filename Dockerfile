@@ -2,6 +2,7 @@
 FROM node:20 AS build-react 
 WORKDIR /app 
 COPY ./frontend/package*.json ./
+RUN npm install
 COPY ./frontend/ .
 RUN npm run build
 # get build from frontend
