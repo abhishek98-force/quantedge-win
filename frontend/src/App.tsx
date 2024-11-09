@@ -1,10 +1,10 @@
-import Header from './components/Header';
-import MainBody from './components/MainBody';
 
+import MainBody from './components/MainBody';
+import SideBar from './components/SideBar';
 function App() {
   return (
     <>
-      <Header />
+      <SideBar/>
       <MainBody />
     </>
   );

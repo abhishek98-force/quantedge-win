@@ -1,7 +1,7 @@
 {
   "name": "pywebview-with-vite-react",
   "version": "0.0.0",
-  "description": "",
+  "description": "This is a  simple boilerplate to help you start with _pywebview_, Vite, and React. Stack is based on pywebview, React, Vite bundler, pyinstaller (Windows/Linux) and py2app (macOS).",
   "scripts": {
     "build": "npm run clean && npm run build-frontend && run-script-os",
     "build:macos": "./venv/bin/python build-macos.py py2app",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ShijiMi-Soup/pywebview-with-vite-react"
+    "url": "git+https://github.com/ShijiMi-Soup/pywebview-with-vite-react.git"
   },
   "keywords": [
     "pywebview",
@@ -45,5 +45,10 @@
   ],
   "devDependencies": {
     "run-script-os": "^1.1.6"
-  }
+  },
+  "main": "index.js",
+  "bugs": {
+    "url": "https://github.com/ShijiMi-Soup/pywebview-with-vite-react/issues"
+  },
+  "homepage": "https://github.com/ShijiMi-Soup/pywebview-with-vite-react#readme"
 }
