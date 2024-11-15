@@ -80,7 +80,7 @@ export default function TechnicalAnalysis() {
       {/* if its desktop I want them to be side by side else stacked */}
       {isLoading ? (
         <div className="mt-10 flex justify-center items-center">
-          <LoadingSpinner className="dark: text-neutral-50" />
+          <LoadingSpinner className="text-neutral-950 dark:text-neutral-50" />
         </div>
       ) : (
         stockData && (

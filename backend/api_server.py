@@ -80,7 +80,15 @@ strategy_json = {
 template = """Question: {question}
 
 Answer: Let's think step by step."""
-
+ollama_installed = False
+#Logic to check if OLlAMA is installed or not , if not avaible handle it
+try:
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_ollama import ChatOllama
+    ollama_installed = True
+except ImportError:
+    ollama_installed = False
+    print("Warning: langchain_ollama is not installed. Some features may not be available.")
 
 @app.get("/api/healthz")
 def get_trivia():
@@ -92,25 +100,28 @@ def get_ticker_details(ticker: str):
     json_tech_data = json.dumps(tech_data)
     prepared_prompt = construct_prompt(ticker, tech_data)
     # mistral_response = get_mistral_response(prepared_prompt)
-    llama_response = get_llama_response(prepared_prompt)
+    if ollama_installed:
+      llama_response = get_llama_response(prepared_prompt)
 
-    # print(mistral_response)
-    print(llama_response.content)
-    llama_response_json = llama_response.content
-    json_part_match = re.search(r'\{.*?\}', llama_response_json, flags=re.DOTALL)
-    result_json_str = ""
-    if json_part_match:
-        json_part = json_part_match.group(0)
-        data = json.loads(json_part)
-        # Construct the result JSON string with only the required fields
-        result_json_str = json.dumps({"recommendation": data["recommendation"], "reasoning": data["reasoning"]})
-        print(result_json_str)
+      # print(mistral_response)
+      print(llama_response.content)
+      llama_response_json = llama_response.content
+      json_part_match = re.search(r'\{.*?\}', llama_response_json, flags=re.DOTALL)
+      result_json_str = ""
+      if json_part_match:
+          json_part = json_part_match.group(0)
+          data = json.loads(json_part)
+          # Construct the result JSON string with only the required fields
+          result_json_str = json.dumps({"recommendation": data["recommendation"], "reasoning": data["reasoning"]})
+          print(result_json_str)
+      else:
+          print("No valid JSON found in content.")
     else:
-        print("No valid JSON found in content.")
-    # mistral_response = json.loads(mistral_response.content)
+      result_json_str = "Ollama not installed"
+      # mistral_response = json.loads(mistral_response.content)
     return {'technical_data': json_tech_data,
-            # 'mistral_response': mistral_response,
-            'llama_response': result_json_str}
+          # 'mistral_response': mistral_response,
+          'llama_response': result_json_str}
 
 def get_mistral_response(prompt):
     llm = ChatOllama(model="mistral", temperature=0)
