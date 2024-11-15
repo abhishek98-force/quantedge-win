@@ -6,11 +6,15 @@ import random
 import logging
 import yfinance as yf
 import os
-
+import re
 
 from datetime import datetime, timedelta
 import ta
 import json
+
+# llm models 
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
 
 app = FastAPI()
 
@@ -28,6 +32,56 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+strategy_json = {
+  "strategies": [
+    {
+      "strategy": "LT112",
+      "description": "Optimized for stable markets with a 50-wide protective PDS, balancing premium collection with risk management.",
+      "whenToUse": "Normal to slightly bullish markets.",
+      "nakedPutsDelta": "2x at 5-7 Delta",
+      "pdsLongPutDelta": "25 (variable)",
+      "pdsWidth": "25-50",
+      "pdsNPRCostRatio": "1:3",
+      "technicalIndicators": "12-day EMA above 26-day EMA; Price above 50-day SMA, indicating immediate bullish momentum and a strong short to medium-term uptrend."
+    },
+    {
+      "strategy": "BA112",
+      "description": "Aimed at longer, deeper sell-offs with a defensive stance by positioning naked puts further OTM (lower delta), widening the width of the trap and collecting less overall premium due to NPs being further OTM.",
+      "whenToUse": "Expecting a serious market correction rather than a shorter pull back.",
+      "nakedPutsDelta": "2x at 3-5 Delta",
+      "pdsLongPutDelta": "25",
+      "pdsWidth": "50 (or smaller)",
+      "pdsNPRCostRatio": "1:1",
+      "technicalIndicators": "26-day EMA below 12-day EMA and approaching 50-day SMA from above; RSI > 75, indicating potential overextension and readiness for a correction."
+    },
+    {
+      "strategy": "FB112",
+      "description": "Optimized for smaller market pullbacks, involves setting up a fatter PDS trap to sweeten the profits on a pullback. Generally, means a trap >50 points wide",
+      "whenToUse": "Good strategy when fundamentals are strong but the market is overbought, indicating a short-term correction may be warranted.",
+      "nakedPutsDelta": "2x at 5-6 Delta",
+      "pdsLongPutDelta": "25-50",
+      "pdsWidth": "50-100",
+      "pdsNPRCostRatio": "1:2",
+      "technicalIndicators": "12-day EMA significantly above 26-day EMA; Price touches or exceeds upper Bollinger Band, RSI > 70, signaling overbought conditions ripe for a pullback."
+    },
+    {
+      "strategy": "111",
+      "description": "A variant of FB112 focusing on overbought markets, where the credit from a single Naked Put is used exclusively to finance the PDS, aiming for minimal risk exposure.",
+      "whenToUse": "Overbought markets, fully leveraging NP credit for PDS, to minimize risk.",
+      "nakedPutsDelta": "1x at 5-6 Delta",
+      "pdsLongPutDelta": "Not specified",
+      "pdsWidth": "50-100",
+      "pdsNPRCostRatio": "1:1",
+      "technicalIndicators": "Similar to FB112: 12-day EMA above 26-day EMA during clear overbought conditions; Price approaches or touches upper Bollinger Band, further confirmed by RSI > 70."
+    }
+  ]
+}
+
+template = """Question: {question}
+
+Answer: Let's think step by step."""
+
+
 @app.get("/api/healthz")
 def get_trivia():
     return {'name':'healthy'}
@@ -36,7 +90,37 @@ def get_trivia():
 def get_ticker_details(ticker: str):
     tech_data = perform_technical_analysis(ticker)
     json_tech_data = json.dumps(tech_data)
-    return {'technical_data': json_tech_data}
+    prepared_prompt = construct_prompt(ticker, tech_data)
+    # mistral_response = get_mistral_response(prepared_prompt)
+    llama_response = get_llama_response(prepared_prompt)
+
+    # print(mistral_response)
+    print(llama_response.content)
+    llama_response_json = llama_response.content
+    json_part_match = re.search(r'\{.*?\}', llama_response_json, flags=re.DOTALL)
+    result_json_str = ""
+    if json_part_match:
+        json_part = json_part_match.group(0)
+        data = json.loads(json_part)
+        # Construct the result JSON string with only the required fields
+        result_json_str = json.dumps({"recommendation": data["recommendation"], "reasoning": data["reasoning"]})
+        print(result_json_str)
+    else:
+        print("No valid JSON found in content.")
+    # mistral_response = json.loads(mistral_response.content)
+    return {'technical_data': json_tech_data,
+            # 'mistral_response': mistral_response,
+            'llama_response': result_json_str}
+
+def get_mistral_response(prompt):
+    llm = ChatOllama(model="mistral", temperature=0)
+    mistral_respone = llm.invoke(prompt)
+    return mistral_respone
+
+def get_llama_response(prompt):
+    llm = ChatOllama(model="llama3.2", temperature=0)
+    llama_response = llm.invoke(prompt)
+    return llama_response
 
 def perform_technical_analysis(ticker):
     # Calculate the date range for the last one year
@@ -112,6 +196,33 @@ def perform_technical_analysis(ticker):
     latest_data['Date'] = stock_data.index[-1].strftime('%Y-%m-%d')
 
     return latest_data
+
+def construct_prompt(ticker, ta_json):
+
+    sample_json = """
+        {
+        "recommendation": "LT112",
+        "reasoning": "Explanation for why LT112 is recommended based on the analysis."
+    }
+    """
+
+    strategy_prompt = f"""
+    You are a financial analyst. Your task is to review the technical indicators for {ticker}
+    represented as {ta_json} and use the strategies defined in : {strategy_json}
+    and make a recommendation for the best strategy to use and the reason for your recommendation.
+    Your response should be a simple json like this 
+    {sample_json}
+    """
+
+    messages = [
+        (
+            "system",
+            "You are a financial analyst.",
+        ),
+        ("human", strategy_prompt),
+    ]
+
+    return messages
 
 if os.getenv("RUNNING_IN_DOCKER"):
     app.mount("/", StaticFiles(directory="/app/dist", html=True), name="static")
