@@ -6,3 +6,5 @@ pyinstaller; sys_platform != 'darwin'
 py2app; sys_platform == 'darwin'
 yfinance==0.2.35
 ta==0.11.0
+langchain-ollama
+langchain
