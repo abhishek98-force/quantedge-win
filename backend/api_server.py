@@ -96,6 +96,7 @@ def get_trivia():
 
 @app.get("/api/fectchTicker")
 def get_ticker_details(ticker: str):
+    logger.info(f'The value of : ${ollama_installed}')
     tech_data = perform_technical_analysis(ticker)
     json_tech_data = json.dumps(tech_data)
     prepared_prompt = construct_prompt(ticker, tech_data)
@@ -119,9 +120,7 @@ def get_ticker_details(ticker: str):
           print("No valid JSON found in content.")
     else:
       result_json_str = "Ollama not installed"
-      print({'technical_data': json_tech_data,
-          # 'mistral_response': mistral_response,
-          'llama_response': result_json_str})
+      logger.info('Response data: %s', {'technical_data': json_tech_data, 'llama_response': result_json_str})
       # mistral_response = json.loads(mistral_response.content)
     return {'technical_data': json_tech_data,
           # 'mistral_response': mistral_response,
