@@ -30,6 +30,7 @@ export default function TechnicalAnalysis() {
   const [llamaResponse, setllamaResponse] = useState<LlmInferenceType | null>(
     null
   );
+  const [ollamaNotfound, setOllamaNotfound] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // const [mistralResponse, setmistralResponse] =
   //   useState<LlmInferenceType | null>(null);
@@ -50,6 +51,7 @@ export default function TechnicalAnalysis() {
   }
   async function handleEndPoint() {
     try {
+      let ollamaFound = true;
       setIsLoading(true);
       setDispTicker(ticker);
       const response = await fetch(
@@ -61,11 +63,17 @@ export default function TechnicalAnalysis() {
       // const mistral_response = JSON.parse(
       //   data.mistal_response
       // ) as LlmInferenceType;
-      const llama_response = JSON.parse(
-        data.llama_response
-      ) as LlmInferenceType;
-      // setmistralResponse(mistral_response);
-      setllamaResponse(llama_response);
+      if (data.llama_response === 'Ollama not installed') {
+        setOllamaNotfound(true);
+        ollamaFound = false;
+      }
+      if (ollamaFound) {
+        const llama_response = JSON.parse(
+          data.llama_response
+        ) as LlmInferenceType;
+        // setmistralResponse(mistral_response);
+        setllamaResponse(llama_response);
+      }
       setStockData(tech_data);
     } catch (error) {
       throw new Error();
@@ -161,16 +169,20 @@ export default function TechnicalAnalysis() {
                 <Card className="w-full p-2">
                   <div className="flex flex-row">
                     <CardHeader className="w-1/3">
-                      <CardTitle>
-                        <FontAwesomeIcon icon={faBoltLightning} /> {`Mistral`}
-                      </CardTitle>
+                      <CardTitle>{`Llama3.2`}</CardTitle>
                     </CardHeader>
                     <Separator orientation="vertical" className="mr-2 h-4" />
-                    <CardContent className="w-2/3">
-                      <div className="text-2xl p-2">
-                        {llamaResponse?.recommendation}
-                      </div>
-                      <div className="p-2">{llamaResponse?.reasoning}</div>
+                    <CardContent className="w-2/3 flex items-center">
+                      {!ollamaNotfound ? (
+                        <div>
+                          <div className="text-2xl p-2">
+                            {llamaResponse?.recommendation}
+                          </div>
+                          <div className="p-2">{llamaResponse?.reasoning}</div>
+                        </div>
+                      ) : (
+                        <div>{`Ollama not installed`}</div>
+                      )}
                     </CardContent>
                   </div>
                 </Card>

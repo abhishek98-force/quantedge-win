@@ -85,7 +85,7 @@ ollama_installed = False
 try:
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_ollama import ChatOllama
-    ollama_installed = True
+    ollama_installed = False
 except ImportError:
     ollama_installed = False
     print("Warning: langchain_ollama is not installed. Some features may not be available.")
@@ -96,6 +96,7 @@ def get_trivia():
 
 @app.get("/api/fectchTicker")
 def get_ticker_details(ticker: str):
+    ollama_installed = False
     tech_data = perform_technical_analysis(ticker)
     json_tech_data = json.dumps(tech_data)
     prepared_prompt = construct_prompt(ticker, tech_data)
@@ -118,6 +119,9 @@ def get_ticker_details(ticker: str):
           print("No valid JSON found in content.")
     else:
       result_json_str = "Ollama not installed"
+      print({'technical_data': json_tech_data,
+          # 'mistral_response': mistral_response,
+          'llama_response': result_json_str})
       # mistral_response = json.loads(mistral_response.content)
     return {'technical_data': json_tech_data,
           # 'mistral_response': mistral_response,
