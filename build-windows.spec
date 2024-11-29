@@ -4,13 +4,14 @@
 block_cipher = None
 added_files = [
     ('.\\gui', 'gui'),
+    ('.\\backend\\test.db', 'backend'),
 ]
 
 a = Analysis(['.\\backend\\index.py'],
              pathex=['.\\dist'],
              binaries=[],
              datas=added_files,
-             hiddenimports=['clr'],
+             hiddenimports=['clr','pydantic','pydantic-core','pydantic.deprecated.decorator'],
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],

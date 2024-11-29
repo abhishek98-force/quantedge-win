@@ -1,7 +1,7 @@
 import React from 'react';
 type SearchBoxProps = {
   handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleButtonClick: () => void;
+  handleButtonClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 export function SearchBox({
   handleInputChange,

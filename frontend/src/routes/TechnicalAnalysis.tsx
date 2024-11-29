@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { SearchBox } from '../components/SearchBox';
 
 //import types
-import { StockDataType } from '../types/technical-indicators';
-import { LlmInferenceType } from '../types/technical-indicators';
+// import { StockDataType } from '../types/technical-indicators';
+// import { LlmInferenceType } from '../types/technical-indicators';
 
 import {
   Card,
@@ -12,69 +12,318 @@ import {
   CardContent,
 } from '../components/ui/card';
 
-import { Separator } from '../components/ui/separator';
-
 //spinner
 import { LoadingSpinner } from '../components/loading-spinner';
 
 //font-awesome-imports
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
-import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
+import {
+  faDollarSign,
+  faArrowUp,
+  faArrowDown,
+  faChartBar,
+  faChartLine,
+} from '@fortawesome/free-solid-svg-icons';
+
+import { fetchTechnicalIndicator } from '../state/technicalIndicators/technicalAnalysisThunk';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../state/store';
 
 export default function TechnicalAnalysis() {
   const [ticker, setTicker] = useState('');
-  const [dispTicker, setDispTicker] = useState('');
   // const [tickerData, setTickerData] = useState('');
-  const [stockData, setStockData] = useState<StockDataType | null>(null);
-  const [llamaResponse, setllamaResponse] = useState<LlmInferenceType | null>(
-    null
-  );
-  const [ollamaNotfound, setOllamaNotfound] = useState(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // const [llamaResponse, setllamaResponse] = useState<LlmInferenceType | null>(
+  //   null
+  // );
+  // const [ollamaNotfound, setOllamaNotfound] = useState(false);
+
   // const [mistralResponse, setmistralResponse] =
   //   useState<LlmInferenceType | null>(null);
-  function parseDataToStockDataType(data: string): StockDataType | null {
-    try {
-      const tech_data = JSON.parse(data);
-      return tech_data as StockDataType;
-    } catch (err) {
-      //need to return better error
-      throw new Error('Error');
-    }
-  }
+
+  const technicalIndicatorState = useSelector(
+    (state: RootState) => state.technicalIndicator
+  );
+  const llmInferenceState = useSelector(
+    (state: RootState) => state.llmInference
+  );
+  const dispatch = useDispatch<AppDispatch>();
+
+  const TechnicalData = [
+    {
+      heading: `${technicalIndicatorState.data?.Ticker} Price Overview`,
+      icon: faDollarSign,
+      items: [
+        {
+          label: 'Open',
+          value: technicalIndicatorState.data?.Open,
+          icon: faDollarSign,
+        },
+        {
+          label: 'Close',
+          value: technicalIndicatorState.data?.Close,
+          icon: faDollarSign,
+        },
+        {
+          label: 'High',
+          value: technicalIndicatorState.data?.High,
+          icon: faArrowUp,
+        },
+        {
+          label: 'Low',
+          value: technicalIndicatorState.data?.Low,
+          icon: faArrowDown,
+        },
+        {
+          label: 'Volume',
+          value: technicalIndicatorState.data?.Volume
+            ? (technicalIndicatorState.data.Volume / 1000000).toFixed(1) + 'M'
+            : '0M',
+          icon: faChartBar,
+        },
+        {
+          label: 'Daily Return',
+          value: technicalIndicatorState.data?.DailyReturn,
+          icon: faChartLine,
+        },
+      ],
+    },
+    {
+      heading: 'Momentum Indicators',
+      icon: faChartLine,
+      items: [
+        {
+          label: 'RSI',
+          value: technicalIndicatorState.data?.RSI,
+          icon: faChartLine,
+        },
+        {
+          label: 'Stochastic',
+          value: technicalIndicatorState.data?.Stochastic,
+          icon: faChartLine,
+        },
+        {
+          label: 'Stochastic RSI',
+          value: technicalIndicatorState.data?.StochasticRSI,
+          icon: faChartLine,
+        },
+        {
+          label: 'MACD Line',
+          value: technicalIndicatorState.data?.MACD,
+          icon: faChartLine,
+        },
+        {
+          label: 'MACD Signal',
+          value: technicalIndicatorState.data?.MACD_Signal,
+          icon: faChartLine,
+        },
+        {
+          label: 'MACD Histogram',
+          value: technicalIndicatorState.data?.MACD_Diff,
+          icon: faChartLine,
+        },
+        {
+          label: 'CCI',
+          value: technicalIndicatorState.data?.CCI,
+          icon: faChartLine,
+        },
+        {
+          label: 'Ultimate Oscillator',
+          value: technicalIndicatorState.data?.UltimateOscillator,
+          icon: faChartLine,
+        },
+        {
+          label: 'Williams %R',
+          value: technicalIndicatorState.data?.WilliamsR,
+          icon: faChartLine,
+        },
+      ],
+    },
+    {
+      heading: 'Moving Averages',
+      icon: faChartLine,
+      items: [
+        {
+          label: 'EMA (12-day)',
+          value: technicalIndicatorState.data?.EMA_12,
+          icon: faChartLine,
+        },
+        {
+          label: 'EMA (26-day)',
+          value: technicalIndicatorState.data?.EMA_26,
+          icon: faChartLine,
+        },
+        {
+          label: 'SMA (21-day)',
+          value: technicalIndicatorState.data?.SMA_21,
+          icon: faChartLine,
+        },
+        {
+          label: 'SMA (50-day)',
+          value: technicalIndicatorState.data?.SMA_50,
+          icon: faChartLine,
+        },
+        {
+          label: 'SMA (200-day)',
+          value: technicalIndicatorState.data?.SMA_200,
+          icon: faChartLine,
+        },
+        {
+          label: 'WMA',
+          value: technicalIndicatorState.data?.WMA,
+          icon: faChartLine,
+        },
+      ],
+    },
+    {
+      heading: 'Movement Indicators',
+      icon: faArrowUp,
+      items: [
+        {
+          label: 'ATR',
+          value: technicalIndicatorState.data?.ATR,
+          icon: faArrowUp,
+        },
+        {
+          label: 'Ulcer Index',
+          value: technicalIndicatorState.data?.UlcerIndex,
+          icon: faChartLine,
+        },
+        {
+          label: 'Bollinger Bands High',
+          value: technicalIndicatorState.data?.BollingerBands_High,
+          icon: faChartLine,
+        },
+        {
+          label: 'Bollinger Bands Low',
+          value: technicalIndicatorState.data?.BollingerBands_Low,
+          icon: faChartLine,
+        },
+        {
+          label: 'Donchian Channel High',
+          value: technicalIndicatorState.data?.DonchianChannel_High,
+          icon: faChartLine,
+        },
+        {
+          label: 'Donchian Channel Low',
+          value: technicalIndicatorState.data?.DonchianChannel_Low,
+          icon: faChartLine,
+        },
+        {
+          label: 'Keltner Channel High',
+          value: technicalIndicatorState.data?.KeltnerChannel_High,
+          icon: faChartLine,
+        },
+        {
+          label: 'Keltner Channel Low',
+          value: technicalIndicatorState.data?.KeltnerChannel_Low,
+          icon: faChartLine,
+        },
+      ],
+    },
+    {
+      heading: 'Volume & Flow Indicators',
+      icon: faChartBar,
+      items: [
+        {
+          label: 'OBV',
+          value: technicalIndicatorState.data?.OBV,
+          icon: faChartBar,
+        },
+        {
+          label: 'ADI',
+          value: technicalIndicatorState.data?.ADI,
+          icon: faChartBar,
+        },
+        {
+          label: 'CMF',
+          value: technicalIndicatorState.data?.CMF,
+          icon: faChartBar,
+        },
+        {
+          label: 'Force Index',
+          value: technicalIndicatorState.data?.ForceIndex,
+          icon: faChartBar,
+        },
+        {
+          label: 'MFI',
+          value: technicalIndicatorState.data?.MFI,
+          icon: faChartBar,
+        },
+        {
+          label: 'VPT',
+          value: technicalIndicatorState.data?.VPT,
+          icon: faChartBar,
+        },
+      ],
+    },
+    {
+      heading: 'Performance Metrics',
+      icon: faChartLine,
+      items: [
+        {
+          label: 'Daily Logarithmic Return',
+          value: technicalIndicatorState.data?.DailyLogReturn,
+          icon: faChartLine,
+        },
+        {
+          label: 'Daily Return',
+          value: technicalIndicatorState.data?.DailyReturn,
+          icon: faChartLine,
+        },
+        {
+          label: 'Cumulative Return',
+          value: technicalIndicatorState.data?.CumulativeReturn,
+          icon: faChartLine,
+        },
+      ],
+    },
+  ];
+
+  // function parseDataToStockData>Type(data: string): StockDataType | null {
+  //   try {
+  //     const tech_data = JSON.parse(data);
+  //     return tech_data as StockDataType;
+  //   } catch (err) {
+  //     //need to return better error
+  //     throw new Error('Error');
+  //   }
+  // }
 
   function handleTickerChange(
     event: React.ChangeEvent<HTMLInputElement>
   ): void {
     setTicker(event.target.value);
   }
-  async function handleEndPoint() {
+  async function handleEndPoint(event: React.MouseEvent<HTMLButtonElement>) {
     try {
-      let ollamaFound = true;
-      setIsLoading(true);
-      setDispTicker(ticker);
-      const response = await fetch(
-        'http://localhost:8000/api/fectchTicker?ticker=' + ticker
-      );
-      const data = await response.json();
-      setIsLoading(false);
-      const tech_data = parseDataToStockDataType(data.technical_data);
+      event.preventDefault();
+      // let ollamaFound = true;
+      // const response = await fetch(
+      //   'http://localhost:8000/api/fectchTicker?ticker=' + ticker
+      // );
+      // const data = await response.json();
+      // setIsLoading(false);
+      // const tech_data = parseDataToStockDataType(data.technical_data);
+
       // const mistral_response = JSON.parse(
       //   data.mistal_response
       // ) as LlmInferenceType;
-      if (data.llama_response === 'Ollama not installed') {
-        setOllamaNotfound(true);
-        ollamaFound = false;
-      }
-      if (ollamaFound) {
-        const llama_response = JSON.parse(
-          data.llama_response
-        ) as LlmInferenceType;
-        // setmistralResponse(mistral_response);
-        setllamaResponse(llama_response);
-      }
-      setStockData(tech_data);
+      const tickerData = {
+        ticker: ticker,
+      };
+      dispatch(fetchTechnicalIndicator(tickerData));
+      // if (data.llama_response === 'Ollama not installed') {
+      //   setOllamaNotfound(true);
+      //   ollamaFound = false;
+      // }
+      // if (ollamaFound) {
+      //   const llama_response = JSON.parse(
+      //     data.llama_response
+      //   ) as LlmInferenceType;
+      //   // setmistralResponse(mistral_response);
+      //   setllamaResponse(llama_response);
+      // }
+      // setStockData(tech_data);
     } catch (error) {
       throw new Error();
     }
@@ -86,127 +335,65 @@ export default function TechnicalAnalysis() {
         handleButtonClick={handleEndPoint}
       />
       {/* if its desktop I want them to be side by side else stacked */}
-      {isLoading ? (
-        <div className="mt-10 flex justify-center items-center">
-          <LoadingSpinner className="text-neutral-950 dark:text-neutral-50" />
-        </div>
-      ) : (
-        stockData && (
-          <div>
-            <div className="flex flex-col md:flex-row gap-2 mt-10 p-2 flex-1">
-              <Card className="w-full md:w-1/2">
-                <CardHeader>
-                  <CardTitle>
-                    <FontAwesomeIcon icon={faDollarSign} />{' '}
-                    {`${dispTicker} Price Overview`}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">Open</div>
-                      <div className="text-lg font-semibold">
-                        ${stockData.Open}
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">Close</div>
-                      <div className="text-lg font-semibold">
-                        ${stockData.Close}
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">High</div>
-                      <div className="text-lg font-semibold">
-                        ${stockData.High}
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">Low</div>
-                      <div className="text-lg font-semibold">
-                        ${stockData.Low}
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">Volume</div>
-                      <div className="text-lg font-semibold">
-                        {(stockData.Volume / 1000000).toFixed(1)}M
-                      </div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm text-gray-500">Daily Return</div>
-                      {/* <div
-                    className={`text-lg font-semibold flex items-center gap-1 ${
-                      isPositive(stockData.DailyReturn)
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {isPositive(stockData.DailyReturn) ? (
-                      <ArrowUpRight className="w-4 h-4" />
-                    ) : (
-                      <ArrowDownRight className="w-4 h-4" />
-                    )}
-                    {stockData.DailyReturn)}%
-                  </div> */}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      <div>
+        {technicalIndicatorState.status === 'idle' && (
+          <div className="mt-10 flex justify-center items-center">
+            <p>Search for a stock</p>
+          </div>
+        )}
+        {technicalIndicatorState.status === 'loading' && (
+          <div className="mt-10 flex justify-center items-center">
+            <LoadingSpinner className="text-neutral-950 dark:text-neutral-50" />
+          </div>
+        )}
 
-              <Card className="w-full md:w-1/2">
-                <CardHeader>
-                  <CardTitle>
-                    <FontAwesomeIcon icon={faBoltLightning} />{' '}
-                    {`Momentum Indicators`}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            </div>
-            <div className="mt-10">
-              <div className="text-4xl dark:text-neutral-50">{`LLM Results`}</div>
-              <div className="flex flex-col gap-4 mt-5">
-                <Card className="w-full p-2">
-                  <div className="flex flex-row">
-                    <CardHeader className="w-1/3">
-                      <CardTitle>{`Llama3.2`}</CardTitle>
-                    </CardHeader>
-                    <Separator orientation="vertical" className="mr-2 h-4" />
-                    <CardContent className="w-2/3 flex items-center">
-                      {!ollamaNotfound ? (
-                        <div>
-                          <div className="text-2xl p-2">
-                            {llamaResponse?.recommendation}
+        {technicalIndicatorState.status === 'succeeded' && (
+          <div>
+            <div className="flex flex-col p-14 md:p-0 md:flex-row flex-wrap gap-3 justify-evenly mt-10">
+              {TechnicalData.map((tech_data) => (
+                <Card className="w-full md:w-2/5">
+                  <CardHeader>
+                    <CardTitle>
+                      <FontAwesomeIcon icon={tech_data.icon} />{' '}
+                      {tech_data.heading}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {tech_data.items.map((item) => (
+                        <div className="p-2">
+                          <div className="text-sm text-gray-500">
+                            {item.label}
                           </div>
-                          <div className="p-2">{llamaResponse?.reasoning}</div>
+                          <div className="text-lg font-semibold">
+                            {item.value}
+                          </div>
                         </div>
-                      ) : (
-                        <div>{`Ollama not installed`}</div>
-                      )}
-                    </CardContent>
-                  </div>
+                      ))}
+                    </div>
+                  </CardContent>
                 </Card>
-                <Card className="w-full">
-                  <div className="flex flex-row">
-                    <CardHeader className="w-1/3">
-                      <CardTitle>
-                        <FontAwesomeIcon icon={faBoltLightning} /> {`Mistral`}
-                      </CardTitle>
-                    </CardHeader>
-                    <Separator orientation="vertical" className="mr-2 h-4" />
-                    <CardContent className="w-2/3">
-                      {/* <div>{mistralResponse?.reasoning}</div>
-                    <div>{mistralResponse?.recommendation}</div> */}
-                    </CardContent>
-                  </div>
-                </Card>
+              ))}
+            </div>
+            <div className="mt-10 mx-14">
+              <div className="text-2xl font-bold mb-2 dark:text-white">
+                LLM Recommendations
               </div>
+              {llmInferenceState.data?.map((item) => (
+                <Card className="flex flex-col mt-4">
+                  <CardHeader>
+                    <CardTitle>
+                      <div className="font-bold mb-2">{item.name}</div>{' '}
+                      <div>{item.recommendation}</div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>{item.reasoning}</CardContent>
+                </Card>
+              ))}
             </div>
           </div>
-        )
-      )}
-
-      {/* <div className="text-black dark:text-white">{stockData}</div> */}
+        )}
+      </div>
     </div>
   );
 }

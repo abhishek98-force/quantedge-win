@@ -8,3 +8,9 @@ yfinance==0.2.35
 ta==0.11.0
 langchain-ollama
 langchain
+sqlmodel
+langchain-google-genai
+langchain-groq
+python-dotenv
+pydantic-settings
+alembic
